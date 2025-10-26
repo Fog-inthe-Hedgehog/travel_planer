@@ -1,0 +1,22 @@
+# Create .env :
+# BOT_TOKEN=your_telegram_bot_token
+# OPENWEATHER_API_KEY=your_openweather_api_key
+# AMADEUS_API_KEY=your_amadeus_api_key
+# AMADEUS_API_SECRET=your_amadeus_api_secret
+
+
+#Install dependencies
+
+brew install python@3.13
+python3.13 -m venv .venv
+# in VSCode set interpreter to {WORKSPACE_ROOT}/.venv/bin/python
+source .venv/bin/activate
+# or source .venv/bin/activate.fish
+pip install poetry alembic
+poetry config virtualenvs.in-project true
+poetry install
+
+docker compose up -d
+
+alembic revision --autogenerate -m "Initial migration"
+alembic upgrade head

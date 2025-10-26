@@ -1,0 +1,32 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"actionButtons": {
+			"commands": [
+				{
+					"name": "db",
+					"singleInstance": true,
+					"useVsCodeApi": false,
+					"command": "docker-compose up -d"
+				},
+
+			],
+			"defaultColor": "white",
+			"reloadButton": "↻",
+			"loadNpmCommands": false
+		},
+		"cSpell.words": [
+			"speaches",
+			"Systran"
+		],
+		"python.analysis.include": [
+			"./api/**"
+		],
+		"python.analysis.typeCheckingMode": "standard",
+		"python.analysis.diagnosticsSource": "Pylance"
+	}
+}
