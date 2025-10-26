@@ -11,6 +11,8 @@ class Settings:
     OPENWEATHER_API_KEY: Optional[str] = os.getenv("OPENWEATHER_API_KEY")
     AMADEUS_API_KEY: Optional[str] = os.getenv("AMADEUS_API_KEY")
     AMADEUS_API_SECRET: Optional[str] = os.getenv("AMADEUS_API_SECRET")
+    FOURSQUARE_API_KEY: Optional[str] = os.getenv("FOURSQUARE_API_KEY")
+    OPENTRIPMAP_API_KEY: Optional[str] = os.getenv("OPENTRIPMAP_API_KEY")
     # Опционально: добавьте проверки на наличие обязательных переменных
     def validate(self):
         required_vars = ["BOT_TOKEN", "DATABASE_URL", "OPENWEATHER_API_KEY", "AMADEUS_API_KEY", "AMADEUS_API_SECRET"]
