@@ -1,5 +1,5 @@
 from aiogram import F, Router, types
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart
 from sqlalchemy.orm import Session
 
 from app.database.models import Trip
@@ -65,45 +65,63 @@ async def process_weather_request(message: types.Message):
     except (ValueError, IndexError):
         await message.answer("Ошибка при обработке запроса")
 
-@router.message(Command("top_location"))
-async def cmd_top_location(message: types.Message):
+async def cmd_top_location_list(message: types.Message):
+    if not message.from_user:
+        await message.answer("Ошибка: пользователь не найден")
+        return
+
     db = next(get_db())
     trips = db.query(Trip).filter(Trip.user_id == message.from_user.id).all()
 
     if not trips:
-        await message.answer("У вас пока нет поездок.")
+        await message.answer(
+            "У вас пока нет поездок.\n\n"
+            "Вы можете:\n"
+            "• Создать поездку с помощью /new_trip\n"
+            "• Или ввести название города: /top_location Москва"
+        )
         return
 
-    # Создаем клавиатуру с поездками
+    # Создаем клавиатуру с названиями городов
     from aiogram.utils.keyboard import ReplyKeyboardBuilder
     builder = ReplyKeyboardBuilder()
 
+    # Добавляем уникальные города из поездок
+    unique_cities = set()
     for trip in trips:
-        builder.add(types.KeyboardButton(text=f"POI:{trip.trip_id}"))
+        if trip.destination not in unique_cities:
+            unique_cities.add(trip.destination)
+            builder.add(types.KeyboardButton(text=f"POI:{trip.destination}"))
 
     builder.adjust(2)
 
     await message.answer(
-        "Выберите поездку для просмотра достопримечательностей:",
+        "Выберите город для просмотра достопримечательностей:",
         reply_markup=builder.as_markup(resize_keyboard=True)
     )
 
 @router.message(F.text.startswith("POI:"))
 async def process_poi_request(message: types.Message):
     try:
-        trip_id = int(message.text.split(":")[1])
-        db = next(get_db())
-        trip = db.query(Trip).filter(Trip.trip_id == trip_id).first()
-
-        if not trip:
-            await message.answer("Поездка не найдена.")
+        if not message.text:
+            await message.answer("Ошибка: пустое сообщение")
             return
 
-        await message.answer(f"🏛️ Ищу достопримечательности в {trip.destination}...")
+        city_name = message.text.split(":", 1)[1].strip()
 
-        poi_data = await poi_service.get_points_of_interest(trip.destination)
+        if not city_name:
+            await message.answer("Ошибка: не указано название города")
+            return
 
-        response = f"🏛️ Достопримечательности в {trip.destination}:\n\n"
+        await message.answer(f"🏛️ Ищу достопримечательности в {city_name}...")
+
+        poi_data = await poi_service.get_points_of_interest(city_name)
+
+        if not poi_data:
+            await message.answer(f"❌ Не удалось найти достопримечательности для {city_name}")
+            return
+
+        response = f"🏛️ Достопримечательности в {city_name}:\n\n"
         for i, poi in enumerate(poi_data, 1):
             response += f"{i}. {poi['name']}\n"
             response += f"   Тип: {poi['type']}\n"
@@ -113,3 +131,43 @@ async def process_poi_request(message: types.Message):
 
     except (ValueError, IndexError):
         await message.answer("Ошибка при обработке запроса")
+
+@router.message(Command("top_location"))
+async def cmd_top_location_with_city(message: types.Message):
+    """Обработчик команды /top_location с названием города"""
+    if not message.text:
+        await message.answer("Ошибка: пустое сообщение")
+        return
+
+    # Извлекаем название города из команды
+    command_parts = message.text.split(maxsplit=1)
+    if len(command_parts) < 2:
+        # Если город не указан, показываем список городов из поездок
+        await cmd_top_location_list(message)
+        return
+
+    city_name = command_parts[1].strip()
+
+    if not city_name:
+        await message.answer("Пожалуйста, укажите название города: /top_location Москва")
+        return
+
+    await message.answer(f"🏛️ Ищу достопримечательности в {city_name}...")
+
+    try:
+        poi_data = await poi_service.get_points_of_interest(city_name)
+
+        if not poi_data:
+            await message.answer(f"❌ Не удалось найти достопримечательности для {city_name}")
+            return
+
+        response = f"🏛️ Достопримечательности в {city_name}:\n\n"
+        for i, poi in enumerate(poi_data, 1):
+            response += f"{i}. {poi['name']}\n"
+            response += f"   Тип: {poi['type']}\n"
+            response += f"   Рейтинг: {poi['rating']}/5\n\n"
+
+        await message.answer(response)
+
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при поиске достопримечательностей: {str(e)}")
