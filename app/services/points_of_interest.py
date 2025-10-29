@@ -38,32 +38,37 @@ class PointsOfInterestService:
             # Используем Foursquare API для получения POI
             poi_data = await self._get_poi_from_foursquare(city, limit)
             if poi_data:
+                print(f"Получены данные из Foursquare API для {city}")
                 return poi_data
 
             # Fallback к OpenTripMap API
             poi_data = await self._get_poi_from_opentripmap(city, limit)
             if poi_data:
+                print(f"Получены данные из OpenTripMap API для {city}")
                 return poi_data
 
             # Если все API недоступны, возвращаем mock данные
+            print(f"Используем mock данные для {city}")
             return self._get_mock_poi(city, limit)
 
         except Exception as e:
-            print(f"Ошибка при получении POI: {e}")
+            print(f"Ошибка при получении POI для {city}: {e}")
             return self._get_mock_poi(city, limit)
 
     async def _get_poi_from_foursquare(self, city: str, limit: int) -> list:
         """Получение POI через Foursquare API"""
         try:
+            # Проверяем наличие API ключа
+            if not self.foursquare_api_key or self.foursquare_api_key == "None":
+                print("Foursquare API ключ не установлен")
+                return None
+
             # Используем бесплатный Foursquare API
             url = "https://api.foursquare.com/v3/places/search"
             headers = {
                 "Accept": "application/json",
-                "Authorization": f"fsq3{self.foursquare_api_key}" if self.foursquare_api_key else None
+                "Authorization": f"fsq3{self.foursquare_api_key}"
             }
-
-            if not self.foursquare_api_key:
-                return None
             params = {
                 "query": "tourist attractions",
                 "near": city,
@@ -90,11 +95,13 @@ class PointsOfInterestService:
     async def _get_poi_from_opentripmap(self, city: str, limit: int) -> list:
         """Получение POI через OpenTripMap API"""
         try:
-            # Сначала получаем координаты города
-            geocode_url = "https://api.opentripmap.com/0.1/en/places/geoname"
-            if not self.opentripmap_api_key:
+            # Проверяем наличие API ключа
+            if not self.opentripmap_api_key or self.opentripmap_api_key == "None":
+                print("OpenTripMap API ключ не установлен")
                 return None
 
+            # Сначала получаем координаты города
+            geocode_url = "https://api.opentripmap.com/0.1/en/places/geoname"
             geocode_params = {
                 "name": city,
                 "apikey": self.opentripmap_api_key
