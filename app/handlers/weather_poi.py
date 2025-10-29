@@ -11,49 +11,63 @@ router = Router()
 weather_service = WeatherService()
 poi_service = PointsOfInterestService()
 
-@router.message(Command("weather"))
-async def cmd_weather(message: types.Message):
+async def cmd_weather_list(message: types.Message):
+    if not message.from_user:
+        await message.answer("Ошибка: пользователь не найден")
+        return
+
     db = next(get_db())
     trips = db.query(Trip).filter(Trip.user_id == message.from_user.id).all()
 
     if not trips:
-        await message.answer("У вас пока нет поездок.")
+        await message.answer(
+            "У вас пока нет поездок.\n\n"
+            "Вы можете:\n"
+            "• Создать поездку с помощью /new_trip\n"
+            "• Или ввести название города: /weather Москва"
+        )
         return
 
-    # Создаем клавиатуру с поездками
+    # Создаем клавиатуру с названиями городов
     from aiogram.utils.keyboard import ReplyKeyboardBuilder
     builder = ReplyKeyboardBuilder()
 
+    # Добавляем уникальные города из поездок
+    unique_cities = set()
     for trip in trips:
-        builder.add(types.KeyboardButton(text=f"Weather:{trip.trip_id}"))
+        if trip.destination not in unique_cities:
+            unique_cities.add(trip.destination)
+            builder.add(types.KeyboardButton(text=f"Weather:{trip.destination}"))
 
     builder.adjust(2)
 
     await message.answer(
-        "Выберите поездку для просмотра погоды:",
+        "Выберите город для просмотра погоды:",
         reply_markup=builder.as_markup(resize_keyboard=True)
     )
 
 @router.message(F.text.startswith("Weather:"))
 async def process_weather_request(message: types.Message):
     try:
-        trip_id = int(message.text.split(":")[1])
-        db = next(get_db())
-        trip = db.query(Trip).filter(Trip.trip_id == trip_id).first()
-
-        if not trip:
-            await message.answer("Поездка не найдена.")
+        if not message.text:
+            await message.answer("Ошибка: пустое сообщение")
             return
 
-        await message.answer(f"🌤️ Запрашиваю погоду для {trip.destination}...")
+        city_name = message.text.split(":", 1)[1].strip()
 
-        weather_data = await weather_service.get_current_weather(trip.destination)
+        if not city_name:
+            await message.answer("Ошибка: не указано название города")
+            return
+
+        await message.answer(f"🌤️ Запрашиваю погоду для {city_name}...")
+
+        weather_data = await weather_service.get_current_weather(city_name)
 
         if "error" in weather_data:
-            response = f"❌ Не удалось получить погоду для {trip.destination}"
+            response = f"❌ Не удалось получить погоду для {city_name}"
         else:
             response = (
-                f"🌤️ Погода в {trip.destination}:\n\n"
+                f"🌤️ Погода в {city_name}:\n\n"
                 f"🌡️ Температура: {weather_data['temperature']}°C\n"
                 f"📝 Описание: {weather_data['description']}\n"
                 f"💧 Влажность: {weather_data['humidity']}%\n"
@@ -171,3 +185,89 @@ async def cmd_top_location_with_city(message: types.Message):
 
     except Exception as e:
         await message.answer(f"❌ Ошибка при поиске достопримечательностей: {str(e)}")
+
+@router.message(Command("weather"))
+async def cmd_weather_with_city(message: types.Message):
+    """Обработчик команды /weather с названием города"""
+    if not message.text:
+        await message.answer("Ошибка: пустое сообщение")
+        return
+
+    # Извлекаем название города из команды
+    command_parts = message.text.split(maxsplit=1)
+    if len(command_parts) < 2:
+        # Если город не указан, показываем список городов из поездок
+        await cmd_weather_list(message)
+        return
+
+    city_name = command_parts[1].strip()
+
+    if not city_name:
+        await message.answer("Пожалуйста, укажите название города: /weather Москва")
+        return
+
+    await message.answer(f"🌤️ Запрашиваю погоду для {city_name}...")
+
+    try:
+        weather_data = await weather_service.get_current_weather(city_name)
+
+        if "error" in weather_data:
+            response = f"❌ Не удалось получить погоду для {city_name}"
+        else:
+            response = (
+                f"🌤️ Погода в {city_name}:\n\n"
+                f"🌡️ Температура: {weather_data['temperature']}°C\n"
+                f"📝 Описание: {weather_data['description']}\n"
+                f"💧 Влажность: {weather_data['humidity']}%\n"
+                f"💨 Скорость ветра: {weather_data['wind_speed']} м/с"
+            )
+
+        await message.answer(response)
+
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при получении погоды: {str(e)}")
+
+@router.message(Command("forecast"))
+async def cmd_forecast_with_city(message: types.Message):
+    """Обработчик команды /forecast с названием города"""
+    if not message.text:
+        await message.answer("Ошибка: пустое сообщение")
+        return
+
+    # Извлекаем название города из команды
+    command_parts = message.text.split(maxsplit=1)
+    if len(command_parts) < 2:
+        await message.answer("Пожалуйста, укажите название города: /forecast Москва")
+        return
+
+    city_name = command_parts[1].strip()
+
+    if not city_name:
+        await message.answer("Пожалуйста, укажите название города: /forecast Москва")
+        return
+
+    await message.answer(f"🌤️ Запрашиваю прогноз погоды для {city_name}...")
+
+    try:
+        forecast_data = await weather_service.get_weather_forecast(city_name, days=5)
+
+        if "error" in forecast_data:
+            response = f"❌ Не удалось получить прогноз для {city_name}"
+        else:
+            response = f"🌤️ Прогноз погоды в {city_name} на 5 дней:\n\n"
+
+            for i, day in enumerate(forecast_data["forecast"], 1):
+                # Форматируем дату
+                date_parts = day["date"].split("-")
+                formatted_date = f"{date_parts[2]}.{date_parts[1]}.{date_parts[0]}"
+
+                response += f"📅 {formatted_date}:\n"
+                response += f"🌡️ Температура: {day['temperature']}°C\n"
+                response += f"📝 Описание: {day['description']}\n"
+                response += f"💧 Влажность: {day['humidity']}%\n"
+                response += f"💨 Ветер: {day['wind_speed']} м/с\n\n"
+
+        await message.answer(response)
+
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при получении прогноза: {str(e)}")

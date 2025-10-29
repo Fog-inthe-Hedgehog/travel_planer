@@ -8,10 +8,16 @@
 		"actionButtons": {
 			"commands": [
 				{
-					"name": "db",
+					"name": "db up",
 					"singleInstance": true,
 					"useVsCodeApi": false,
-					"command": "docker-compose up -d"
+					"command": "docker compose up"
+				},
+				{
+					"name": "db down",
+					"singleInstance": true,
+					"useVsCodeApi": false,
+					"command": "docker compose down"
 				},
 
 			],

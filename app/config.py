@@ -15,7 +15,7 @@ class Settings:
     OPENTRIPMAP_API_KEY: Optional[str] = os.getenv("OPENTRIPMAP_API_KEY")
     # Опционально: добавьте проверки на наличие обязательных переменных
     def validate(self):
-        required_vars = ["BOT_TOKEN", "DATABASE_URL", "OPENWEATHER_API_KEY", "AMADEUS_API_KEY", "AMADEUS_API_SECRET"]
+        required_vars = ["BOT_TOKEN", "DATABASE_URL", "OPENWEATHER_API_KEY", "AMADEUS_API_KEY", "AMADEUS_API_SECRET","FOURSQUARE_API_KEY","OPENTRIPMAP_API_KEY"]
         for var in required_vars:
             if not getattr(self, var):
                 raise ValueError(f"Missing required environment variable: {var}")
