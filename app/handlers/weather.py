@@ -39,48 +39,6 @@ async def cmd_weather_list(message: types.Message, state: FSMContext):
     )
 
 
-@router.message(CitySelection.waiting_city_input)
-async def process_weather_city_selection(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    mode = data.get("city_mode")
-    print(f"weather mode: {mode}")
-    if mode not in ("weather", "forecast"):
-        return
-
-    try:
-        if not message.text:
-            await message.answer("Ошибка: пустое сообщение")
-            return
-
-        if message.text.strip() == "Другой город...":
-            await message.answer("Введите название города:")
-            return
-
-        city_name = message.text.strip()
-        if not city_name:
-            await message.answer("Ошибка: не указано название города")
-            return
-
-        await message.answer(
-            f"🌤️ Запрашиваю {'погоду' if mode == 'weather' else 'прогноз'} для {city_name}...",
-            reply_markup=types.ReplyKeyboardRemove()
-        )
-
-        if mode == "weather":
-            result = await weather_service.get_current_weather(city_name)
-            response = format_weather_response(city_name, result)
-        else:
-            result = await weather_service.get_weather_forecast(city_name, days=5)
-            response = format_forecast_response(city_name, result)
-
-        await message.answer(response)
-        await state.clear()
-
-    except Exception as e:
-        await message.answer(f"❌ Ошибка при обработке запроса: {str(e)}")
-        await state.clear()
-
-
 @router.message(Command("weather"))
 async def cmd_weather_with_city(message: types.Message, state: FSMContext):
     if not message.text:

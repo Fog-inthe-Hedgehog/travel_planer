@@ -11,6 +11,7 @@ from app.handlers.trips import router as trips_router
 from app.handlers.tasks import router as tasks_router
 from app.handlers.weather import router as weather_router
 from app.handlers.points_of_interest import router as poi_router
+from app.handlers.city_selection import router as city_selection_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,6 +44,7 @@ async def main():
     dp.include_router(common_router)
     dp.include_router(trips_router)
     dp.include_router(tasks_router)
+    dp.include_router(city_selection_router)
     dp.include_router(weather_router)
     dp.include_router(poi_router)
 

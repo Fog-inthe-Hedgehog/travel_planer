@@ -38,43 +38,6 @@ async def cmd_top_location_list(message: types.Message, state: FSMContext):
     )
 
 
-@router.message(CitySelection.waiting_city_input)
-async def process_poi_city_selection(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    mode = data.get("city_mode")
-    print(mode)
-    if mode != "poi":
-        return
-
-    try:
-        if not message.text:
-            await message.answer("Ошибка: пустое сообщение")
-            return
-
-        if message.text.strip() == "Другой город...":
-            await message.answer("Введите название города:")
-            return
-
-        city_name = message.text.strip()
-        if not city_name:
-            await message.answer("Ошибка: не указано название города")
-            return
-
-        await message.answer(
-            f"🏛️ Ищу достопримечательности в {city_name}...",
-            reply_markup=types.ReplyKeyboardRemove()
-        )
-
-        poi_data = await poi_service.get_points_of_interest(city_name)
-        response = format_poi_response(city_name, poi_data)
-        await message.answer(response)
-        await state.clear()
-
-    except Exception as e:
-        await message.answer(f"❌ Ошибка при обработке запроса: {str(e)}")
-        await state.clear()
-
-
 @router.message(Command("top_location"))
 async def cmd_top_location_with_city(message: types.Message, state: FSMContext):
     if not message.text:
