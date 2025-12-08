@@ -1,0 +1,143 @@
+name: Qwen RTX 4060 Config
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Qwen2.5 RTX 4060
+    provider: ollama
+    model: qwen-opt
+    apiBase: http://localhost:11434
+    systemMessage: |
+      Ты - эксперт по программированию. В чате отвечаешь на русском языке.
+      Твоя задача - помогать с анализом, улучшением и рефакторингом кода.
+      Правила:
+      1. Отвечай только на русском языке
+      2. Анализируй код и архитектуру проектов
+      3. Предлагай конкретные технические улучшения
+      4. Приводи примеры кода когда это необходимо
+      5. Используй доступные инструменты для чтения файлов проекта
+    roles:
+      - chat
+      - edit
+      - apply
+
+  - name: Qwen Fast Coder
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    apiBase: http://localhost:11434
+    roles:
+      - autocomplete
+
+embeddingsProvider:
+  provider: ollama
+  model: nomic-embed-text:latest
+  apiBase: http://localhost:11434
+
+tabAutocompleteModel:
+  name: Qwen Fast Coder
+  provider: ollama
+  model: qwen2.5-coder:1.5b-base
+  apiBase: http://localhost:11434
+
+contextProviders:
+  - name: code
+    params:
+      maxChars: 50000
+
+  - name: docs
+    params: {}
+
+  - name: diff
+    params: {}
+
+  - name: terminal
+    params:
+      command: /bin/bash
+      directory: ""
+
+  - name: problems
+    params: {}
+
+  - name: folder
+    params:
+      maxDepth: 5
+      exclude: ["node_modules", ".git", "__pycache__", "venv", ".env"]
+
+  - name: codebase
+    params:
+      maxItems: 100
+      include: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go", "**/*.rs", "**/*.cpp", "**/*.h"]
+      exclude: ["node_modules/**", ".git/**", "__pycache__/**", "venv/**"]
+
+  - name: open
+    params: {}
+
+  - name: search
+    params: {}
+
+  - name: github
+    params: {}
+
+experimental:
+  sessionContext: true
+  disableIndexing: false
+
+customCommands:
+  - name: analyze-project
+    prompt: |
+      Проанализируй архитектуру текущего проекта и предложи улучшения.
+      Используй доступные файлы проекта через инструменты чтения.
+      Включи в анализ:
+      1. Структуру проекта
+      2. Технологический стек
+      3. Потенциальные проблемы архитектуры
+      4. Конкретные предложения по улучшению
+    description: Анализ архитектуры проекта
+
+  - name: explain-code
+    prompt: |
+      Объясни этот код на русском языке. Укажи:
+      1. Что делает каждая функция/класс
+      2. Сложные моменты в коде
+      3. Возможные улучшения и оптимизации
+      4. Потенциальные ошибки
+    description: Подробное объяснение кода
+
+  - name: create-tests
+    prompt: |
+      Создай unit-тесты для этого кода.
+      Для Python используй pytest, для JavaScript - Jest.
+      Включи тесты на граничные случаи и обработку ошибок.
+    description: Генерация unit-тестов
+
+  - name: refactor-code
+    prompt: |
+      Рефактори этот код:
+      1. Улучши читаемость
+      2. Добавь комментарии на русском
+      3. Оптимизируй производительность
+      4. Убери дублирование кода
+      5. Следуй best practices для языка
+    description: Рефакторинг кода
+
+slashCommands:
+  - name: codebase
+    description: Проиндексировать весь проект для анализа
+    prompt: |
+      Проиндексируй весь проект и предоставь возможность анализа всей структуры.
+      После индексации я смогу задавать вопросы о проекте.
+
+  - name: edit
+    description: Режим редактирования кода
+    prompt: |
+      Перейди в режим редактирования кода.
+      Я укажу что нужно изменить, а ты предложишь изменения.
+
+  - name: clear
+    description: Очистить контекст
+    prompt: Очистить весь текущий контекст разговора.
+
+ui:
+  fontSize: 14
+  theme: dark
+  displayCodeblockLineNumbers: true

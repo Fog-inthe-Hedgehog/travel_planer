@@ -3,7 +3,10 @@
 # OPENWEATHER_API_KEY=your_openweather_api_key
 # AMADEUS_API_KEY=your_amadeus_api_key
 # AMADEUS_API_SECRET=your_amadeus_api_secret
-
+# DATABASE_URL=your_database_url
+# FOURSQUARE_API_KEY=your_foursquare_api_key
+# OPENTRIPMAP_API_KEY=your_opentripmap_api_key
+# DEEPSEEK_API_KEY=your_deepseek_api_key
 
 #Install dependencies
 

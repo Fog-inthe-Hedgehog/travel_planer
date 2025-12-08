@@ -8,7 +8,6 @@ router = Router()
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
-    # Регистрация пользователя в базе данных
     db = next(get_db())
 
     user = db.query(User).filter(User.user_id == message.from_user.id).first()
