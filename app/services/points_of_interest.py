@@ -58,9 +58,7 @@ class PointsOfInterestService:
             now = time.time()
             if cached and now - cached[0] < self._ttl_seconds:
                 return cached[1]
-            print("get_points_of_interest")
-            print(city)
-            print(limit)
+
             poi_data = await self._get_poi_from_foursquare(city, limit)
             if poi_data:
                 logger.info(f"Получены данные из Foursquare API для {city}")
@@ -95,11 +93,17 @@ class PointsOfInterestService:
             if not self.foursquare_api_key or self.foursquare_api_key == "None":
                 logger.debug("Foursquare API ключ не установлен")
                 return None
-            print(self.foursquare_api_key)
+
             url = "https://api.foursquare.com/v3/places/search"
+
+            # Foursquare expects the API key in Authorization; keep existing fsq3 prefix if present.
+            api_key = self.foursquare_api_key
+            if api_key and not api_key.lower().startswith("fsq3"):
+                api_key = f"fsq3{api_key}"
+
             headers = {
                 "Accept": "application/json",
-                "Authorization": f"fsq3{self.foursquare_api_key}"
+                "Authorization": api_key
             }
             params = {
                 "query": "tourist attractions",
