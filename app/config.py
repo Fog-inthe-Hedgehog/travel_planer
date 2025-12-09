@@ -2,7 +2,6 @@ import os
 from typing import Optional
 from dotenv import load_dotenv
 
-# Загружаем переменные из .env файла
 load_dotenv()
 
 class Settings:
@@ -13,7 +12,7 @@ class Settings:
     AMADEUS_API_SECRET: Optional[str] = os.getenv("AMADEUS_API_SECRET")
     FOURSQUARE_API_KEY: Optional[str] = os.getenv("FOURSQUARE_API_KEY")
     OPENTRIPMAP_API_KEY: Optional[str] = os.getenv("OPENTRIPMAP_API_KEY")
-    # Опционально: добавьте проверки на наличие обязательных переменных
+    DEEPSEEK_API_KEY: Optional[str] = os.getenv("DEEPSEEK_API_KEY")
     def validate(self):
         required_vars = ["BOT_TOKEN", "DATABASE_URL", "OPENWEATHER_API_KEY", "AMADEUS_API_KEY", "AMADEUS_API_SECRET","FOURSQUARE_API_KEY","OPENTRIPMAP_API_KEY"]
         for var in required_vars:
@@ -22,4 +21,4 @@ class Settings:
 
 
 settings = Settings()
-settings.validate()  # Проверяем обязательные переменные
+settings.validate()

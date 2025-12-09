@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  app:
+    build: .
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    command: bash -c "poetry run alembic upgrade head && poetry run python main.py"
+
   postgres:
     image: postgres:13
     environment:

@@ -9,3 +9,7 @@ class TripCreation(StatesGroup):
 class TaskCreation(StatesGroup):
     trip_selection = State()
     description = State()
+
+
+class CitySelection(StatesGroup):
+    waiting_city_input = State()
