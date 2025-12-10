@@ -23,4 +23,4 @@ RUN poetry install --no-root
 # Copy application source
 COPY . .
 
-CMD ["bash", "-c", "poetry run alembic upgrade head && poetry run python main.py"]
+CMD ["bash", "-c", "poetry run alembic stamp head && poetry run alembic upgrade head && poetry run python main.py"]
